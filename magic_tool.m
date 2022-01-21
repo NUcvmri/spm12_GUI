@@ -3397,5 +3397,54 @@ prj.add_imageSeries (dataName, importedData.dataAy, FOV, importedData.vox(1:3), 
  msg4=msgbox('Data Imported as tof_cores into GUI workspace!');
     
 %%end of pwinter, 2022/01/06
+
+%%pwinter, 2022/01/13
+function fliptofMenu_Callback(hObject, eventdata, handles)
+    %keyboard
+   prj = getappdata(0, 'project');
     
-    
+   path_coregis=fullfile('D:\temp\', 'coregis'); %Path where coregistration results are saved (hardcoded for now)
+   
+   %Path where mat file is saved
+   path_matfile=fullfile(path_coregis, 'results', 'tof_coregistered_MRStruct.mat');
+   
+   answer = questdlg('Do you want to flip the FOV of the TOF measurement in z direction?', '', 'Yes', 'No', 'Cancel', 'Yes');
+   
+    switch answer
+        case 'Yes'
+            try
+               
+                resdata=importdata(path_matfile);
+                
+                %Flip data Array
+                resdata.dataAy=flip(resdata.dataAy,3);
+                
+                msg1=msgbox(['The MATLAB struct of the flipped TOF images is saved to ' num2str(fullfile(path_coregis, 'results', 'tof_coregistered_MRStruct_flipped.mat'), 'mrStruct')]);
+                save(fullfile(path_coregis, 'results', 'tof_coregistered_MRStruct_flipped.mat'), 'resdata');
+               
+                
+                dataName='tof_cores_flipped';
+                
+                FOV = [zeros(3,1), (resdata.vox(1:3).*size(resdata.dataAy))'];
+                resdata.interpFactor=1;
+
+
+                prj.add_imageSeries (dataName, resdata.dataAy, FOV, resdata.vox(1:3), ...
+                resdata.interpFactor, 'mrStruct');
+                update_volumeLists(handles, prj);
+                
+                msg2=msgbox('Flipped data Imported as tof_cores_flipped into GUI workspace!');
+            catch 
+                msg3=msgbox('No co-registered TOF data found');
+            end
+            
+        case 'No'
+            %do nothing
+            
+        case 'Cancel'
+            %do nothing
+    end
+            
+   
+   
+   
